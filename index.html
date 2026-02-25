@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>团队报名 - 5x5表格</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: #f5f5f5;
+            padding: 10px;
+        }
+
+        /* 主容器 - 响应式 */
+        .team-container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+            max-width: 1200px;
+            margin: 0 auto;
+            min-height: 100vh;
+        }
+
+        .team-header {
+            background: #4a90e2;
+            color: white;
+            padding: 15px 20px;
+        }
+
+        .team-title {
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .team-subtitle {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-top: 5px;
+        }
+
+        .warning {
+            color: #ff6b6b;
+            font-weight: bold;
+        }
+
+        /* 响应式网格容器 */
+        .grid-container {
+            padding: 15px;
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        /* 5x5网格 - 响应式 */
+        .grid-5x5 {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            grid-template-rows: repeat(5, 1fr);
+            gap: 8px;
+            min-width: 600px; /* 最小宽度保证在小屏幕上不挤压 */
+        }
+
+        /* 三合一单元格 - 响应式 */
+        .triple-cell {
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 8px;
+            min-height: 80px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            background: white;
+            transition: all 0.2s ease;
+        }
+
+        .triple-cell:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .triple-cell.selected {
+            border-color: #4a90e2;
+            border-width: 2px;
+            background: #f0f8ff;
+        }
+
+        /* 单元格的三个部分 */
+        .cell-part {
+            width: 100%;
+            text-align: center;
+            cursor: pointer;
+            padding: 3px 0;
+            border-radius: 3px;
+            transition: background 0.2s ease;
+        }
+
+        .cell-part:hover {
+            background: rgba(74, 144, 226, 0.1);
+        }
+
+        /* 职业部分 */
+        .cell-profession {
+            font-size: 12px;
+            font-weight: bold;
+            color: #333;
+            min-height: 18px;
+            padding: 3px 6px;
+            border-radius: 4px;
+        }
+
+        /* 坦克职业 - 红色背景 */
+        .profession-tank {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        /* 治疗职业 - 绿色背景 */
+        .profession-healer {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        /* 输出职业 - 灰色背景 */
+        .profession-dps {
+            background: #f8f9fa;
+            color: #333;
+        }
+
+        /* 装分部分 */
+        .cell-score {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+            min-height: 24px;
+        }
+
+        /* ID部分 */
+        .cell-id {
+            font-size: 12px;
+            color: #333;
+            font-weight: bold;
+            min-height: 18px;
+        }
+
+        /* 输入框 */
+        .input-field {
+            width: 100%;
+            padding: 3px 6px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            text-align: center;
+            font-size: inherit;
+            font-family: inherit;
+        }
+
+        .score-input {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        /* 控制面板 - 只保留刷新按钮 */
+        .control-panel {
+            background: #f8f9fa;
+            padding: 10px 20px;
+            border-top: 1px solid #e0e0e0;
+            text-align: center; /* 居中 */
+        }
+
+        /* 刷新按钮样式 - 与图片中的按钮样式一致 */
+        .refresh-btn {
+            background: #4a90e2; /* 蓝色背景 */
+            color: white; /* 白色文字 */
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .refresh-btn:hover {
+            background: #3a80d2;
+        }
+
+        /* 职业选择弹窗 - 移动端适配 */
+        .profession-selector {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .selector-container {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            width: 100%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .selector-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .selector-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 6px;
+        }
+
+        .profession-btn {
+            padding: 8px 4px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: white;
+            cursor: pointer;
+            font-size: 11px;
+            text-align: center;
+        }
+
+        .profession-btn.tank {
+            background: #f8d7da;
+            color: #721c24;
+            border-color: #f5c6cb;
+        }
+
+        .profession-btn.healer {
+            background: #d4edda;
+            color: #155724;
+            border-color: #c3e6cb;
+        }
+
+        .profession-btn.dps {
+            background: #f8f9fa;
+            color: #333;
+            border-color: #e9ecef;
+        }
+
+        /* 移动端优化 */
+        @media (max-width: 768px) {
+            body {
+                padding: 5px;
+            }
+
+            .team-header {
+                padding: 10px 15px;
+            }
+
+            .team-title {
+                font-size: 16px;
+            }
+
+            .team-subtitle {
+                font-size: 12px;
+            }
+
+            .grid-container {
+                padding: 10px;
+            }
+
+            .grid-5x5 {
+                gap: 5px;
+                min-width: 500px;
+            }
+
+            .triple-cell {
+                padding: 6px;
+                min-height: 70px;
+            }
+
+            .cell-profession {
+                font-size: 11px;
+                padding: 2px 4px;
+            }
+
+            .cell-score {
+                font-size: 14px;
+            }
+
+            .cell-id {
+                font-size: 11px;
+            }
+
+            .refresh-btn {
+                padding: 6px 12px;
+                font-size: 13px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .grid-5x5 {
+                grid-template-columns: repeat(5, 1fr);
+                min-width: 400px;
+            }
+
+            .triple-cell {
+                min-height: 60px;
+                padding: 4px;
+            }
+
+            .cell-score {
+                font-size: 12px;
+            }
+
+            .selector-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        /* 平板适配 */
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .grid-5x5 {
+                min-width: 700px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="team-container">
+    <div class="team-header">
+        <div class="team-title">团队1 周2 YX 一车</div>
+        <div class="team-subtitle">
+            19:35 开团 | 龙妹妹/报名答疑 |
+            <span class="warning">写装分，别大号撞一车</span>
+        </div>
+    </div>
+
+    <div class="grid-container">
+        <div class="grid-5x5" id="teamGrid">
+            <!-- 5x5网格将动态生成 -->
+        </div>
+    </div>
+
+    <!-- 控制面板 - 只保留刷新按钮 -->
+    <div class="control-panel">
+        <button class="refresh-btn" onclick="refreshView()">
+            🔄 刷新
+        </button>
+    </div>
+</div>
+
+<!-- 职业选择弹窗 -->
+<div class="profession-selector" id="professionSelector">
+    <div class="selector-container">
+        <div class="selector-title">选择职业</div>
+        <div class="selector-grid" id="professionGrid">
+            <!-- 职业选项将动态生成 -->
+        </div>
+    </div>
+</div>
+
+<script>
+    const professions = [
+        { id: 'qx', name: '气纯', type: 'dps' },
+        { id: 'jc', name: '剑纯', type: 'dps' },
+        { id: 'fs', name: '分山', type: 'dps' },
+        { id: 'cangt', name: '苍T', type: 'tank' },
+        { id: 'bx', name: '冰心', type: 'dps' },
+        { id: 'naixiu', name: '奶秀', type: 'healer' },
+        { id: 'mw', name: '莫问', type: 'dps' },
+        { id: 'naige', name: '奶歌', type: 'healer' },
+        { id: 'hj', name: '花间', type: 'dps' },
+        { id: 'wanhua', name: '万花', type: 'dps' },
+        { id: 'bd', name: '霸刀', type: 'dps' },
+        { id: 'ax', name: '傲雪', type: 'dps' },
+        { id: 'cet', name: '策T', type: 'tank' },
+        { id: 'pl', name: '蓬莱', type: 'dps' },
+        { id: 'yj', name: '易经', type: 'dps' },
+        { id: 'hst', name: '和尚T', type: 'tank' },
+        { id: 'lx', name: '凌雪', type: 'dps' },
+        { id: 'cj', name: '藏剑', type: 'dps' },
+        { id: 'yt', name: '衍天', type: 'dps' },
+        { id: 'dj', name: '毒经', type: 'dps' },
+        { id: 'naidu', name: '奶毒', type: 'healer' },
+        { id: 'wf', name: '无方', type: 'dps' },
+        { id: 'naiyao', name: '奶药', type: 'healer' },
+        { id: 'jy', name: '鲸鱼', type: 'dps' },
+        { id: 'tl', name: '田螺', type: 'dps' },
+        { id: 'dz', name: '刀宗', type: 'dps' },
+        { id: 'fy', name: '焚影', type: 'dps' },
+        { id: 'miaot', name: '喵T', type: 'tank' },
+        { id: 'wl', name: '万灵', type: 'dps' },
+        { id: 'gb', name: '丐帮', type: 'dps' },
+        { id: 'wx', name: '无相', type: 'dps' },
+        { id: 'ds', name: '段氏', type: 'dps' }
+    ];
+
+    let teamData = Array(25).fill().map(() => ({
+        profession: { value: '', type: 'dps' },
+        score: '',
+        id: '',
+        isSelected: false
+    }));
+
+    let currentCellIndex = -1;
+
+    function initGrid() {
+        const grid = document.getElementById('teamGrid');
+        grid.innerHTML = '';
+
+        for (let i = 0; i < 25; i++) {
+            const cell = document.createElement('div');
+            cell.className = 'triple-cell';
+            cell.dataset.index = i;
+
+            const data = teamData[i];
+
+            // 职业部分
+            const professionPart = document.createElement('div');
+            professionPart.className = 'cell-part cell-profession';
+            if (data.profession.value) {
+                professionPart.innerHTML = `<div class="profession-${data.profession.type}">${data.profession.value}</div>`;
+            } else {
+                professionPart.innerHTML = '<div style="color:#999;font-style:italic;">点击选择职业</div>';
+            }
+            professionPart.onclick = (e) => {
+                e.stopPropagation();
+                openProfessionSelector(i);
+            };
+
+            // 装分部分
+            const scorePart = document.createElement('div');
+            scorePart.className = 'cell-part cell-score';
+            scorePart.textContent = data.score || '点击输入装分';
+            scorePart.onclick = (e) => {
+                e.stopPropagation();
+                editScore(i);
+            };
+
+            // ID部分
+            const idPart = document.createElement('div');
+            idPart.className = 'cell-part cell-id';
+            idPart.textContent = data.id || '点击输入ID';
+            idPart.onclick = (e) => {
+                e.stopPropagation();
+                editId(i);
+            };
+
+            cell.appendChild(professionPart);
+            cell.appendChild(scorePart);
+            cell.appendChild(idPart);
+
+            if (data.isSelected) {
+                cell.classList.add('selected');
+            }
+
+            grid.appendChild(cell);
+        }
+    }
+
+    function openProfessionSelector(index) {
+        currentCellIndex = index;
+        const selector = document.getElementById('professionSelector');
+        selector.style.display = 'flex';
+        initProfessionOptions();
+    }
+
+    function initProfessionOptions() {
+        const grid = document.getElementById('professionGrid');
+        grid.innerHTML = '';
+
+        professions.forEach(prof => {
+            const btn = document.createElement('button');
+            btn.className = `profession-btn ${prof.type}`;
+            btn.textContent = prof.name;
+            btn.addEventListener('click', () => selectProfession(prof));
+            grid.appendChild(btn);
+        });
+
+        const closeBtn = document.createElement('button');
+        closeBtn.className = 'profession-btn';
+        closeBtn.textContent = '取消';
+        closeBtn.addEventListener('click', () => {
+            document.getElementById('professionSelector').style.display = 'none';
+        });
+        grid.appendChild(closeBtn);
+    }
+
+    function selectProfession(prof) {
+        if (currentCellIndex === -1) return;
+
+        teamData[currentCellIndex].profession = {
+            value: prof.name,
+            type: prof.type
+        };
+
+        const cell = document.querySelector(`.triple-cell[data-index="${currentCellIndex}"]`);
+        const professionPart = cell.querySelector('.cell-profession');
+        professionPart.innerHTML = `<div class="profession-${prof.type}">${prof.name}</div>`;
+
+        document.getElementById('professionSelector').style.display = 'none';
+
+        setTimeout(() => editId(currentCellIndex), 100);
+    }
+
+    function editScore(index) {
+        const cell = document.querySelector(`.triple-cell[data-index="${index}"]`);
+        if (!cell) return;
+
+        const scorePart = cell.querySelector('.cell-score');
+        const currentScore = teamData[index].score;
+
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'input-field score-input';
+        input.value = currentScore || '';
+        input.placeholder = '装分';
+
+        scorePart.parentNode.replaceChild(input, scorePart);
+        input.focus();
+        input.select();
+
+        const saveScore = () => {
+            const newScore = input.value.trim();
+            teamData[index].score = newScore;
+
+            const newDiv = document.createElement('div');
+            newDiv.className = 'cell-part cell-score';
+            newDiv.textContent = newScore || '点击输入装分';
+            newDiv.onclick = () => editScore(index);
+
+            input.parentNode.replaceChild(newDiv, input);
+        };
+
+        input.addEventListener('blur', saveScore);
+        input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') saveScore();
+        });
+    }
+
+    function editId(index) {
+        const cell = document.querySelector(`.triple-cell[data-index="${index}"]`);
+        if (!cell) return;
+
+        const idPart = cell.querySelector('.cell-id');
+        const currentId = teamData[index].id;
+
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'input-field id-input';
+        input.value = currentId || '';
+        input.placeholder = '玩家ID';
+
+        idPart.parentNode.replaceChild(input, idPart);
+        input.focus();
+        input.select();
+
+        const saveId = () => {
+            const newId = input.value.trim();
+            teamData[index].id = newId;
+
+            const newDiv = document.createElement('div');
+            newDiv.className = 'cell-part cell-id';
+            newDiv.textContent = newId || '点击输入ID';
+            newDiv.onclick = () => editId(index);
+
+            input.parentNode.replaceChild(newDiv, input);
+        };
+
+        input.addEventListener('blur', saveId);
+        input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') saveId();
+        });
+    }
+
+    // 刷新视图
+    function refreshView() {
+        location.reload();
+    }
+
+    // 关闭弹窗
+    document.getElementById('professionSelector').addEventListener('click', (e) => {
+        if (e.target === document.getElementById('professionSelector')) {
+            document.getElementById('professionSelector').style.display = 'none';
+        }
+    });
+
+    // 初始化
+    window.onload = function() {
+        initGrid();
+    };
+</script>
+</body>
+</html>
